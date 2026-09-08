@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Scacchi per Corrispondenza</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Space+Mono:wght@400;700&display=swap');
+
+:root {
+  --ink: #1b1712;
+  --panel: #241c15;
+  --panel-2: #2e2419;
+  --panel-border: rgba(201,162,75,0.20);
+  --paper: #efe4cc;
+  --paper-ink: #2a1f16;
+  --paper-line: rgba(42,31,22,0.13);
+  --brass: #c9a24b;
+  --brass-bright: #e2c169;
+  --ivory: #f2ecdd;
+  --ivory-dim: #b7ac96;
+  --burgundy: #b1584a;
+  --sage: #8aa873;
+  --sq-light: #3c3122;
+  --sq-dark: #221a12;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--ink);
+  background-image:
+    radial-gradient(circle at 12% -10%, rgba(201,162,75,0.09), transparent 40%),
+    radial-gradient(circle at 100% 10%, rgba(201,162,75,0.05), transparent 35%);
+  color: var(--ivory);
+  font-family: 'Spectral', Georgia, serif;
+  line-height: 1.5;
+  min-height: 100vh;
+  padding: 22px 14px 56px;
+  -webkit-text-size-adjust: 100%;
+}
+.wrap { max-width: 600px; margin: 0 auto; }
+
+/* Header */
+.hdr { text-align: center; margin-bottom: 22px; }
+.hdr-ornament {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  color: var(--brass);
+  opacity: 0.55;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.hdr h1 {
+  margin: 0;
+  font-weight: 600;
+  font-size: 1.9rem;
+  letter-spacing: 0.01em;
+  color: var(--ivory);
+}
+.hdr h1 em {
+  font-style: italic;
+  font-weight: 400;
+  color: var(--brass-bright);
+}
+.tagline {
+  margin: 8px auto 0;
+  max-width: 40em;
+  color: var(--ivory-dim);
+  font-size: 0.92rem;
+  font-style: italic;
+}
+
+/* Cards */
+.card {
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  padding: 16px 16px;
+  margin-bottom: 14px;
+}
+.label {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ivory-dim);
+  display: block;
+  margin-bottom: 8px;
+}
+
+/* Setup Card */
+.setup-row { margin-bottom: 16px; }
+.setup-row:last-of-type { margin-bottom: 0; }
+.pill-group { display: flex; gap: 8px; }
+.pill {
+  flex: 1;
+  font-family: 'Spectral', serif;
+  font-size: 0.95rem;
+  padding: 9px 10px;
+  background: var(--panel-2);
+  border: 1px solid var(--panel-border);
+  border-radius: 3px;
+  color: var(--ivory-dim);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.pill.active {
+  background: var(--brass);
+  border-color: var(--brass);
+  color: var(--ink);
+  font-weight: 600;
+}
+.elo-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; flex-wrap: wrap; gap: 4px; }
+.elo-readout { font-family: 'Space Mono', monospace; font-size: 0.85rem; color: var(--brass-bright); }
+.elo-readout strong { font-size: 1.05rem; color: var(--brass-bright); }
+input[type="range"] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--panel-2);
+  outline: none;
+  margin: 6px 0 4px;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: var(--brass);
+  border: 2px solid var(--ink);
+  cursor: pointer;
+}
+input[type="range"]::-moz-range-thumb {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--brass);
+  border: 2px solid var(--ink);
+  cursor: pointer;
+}
+.elo-ticks {
+  display: flex; justify-content: space-between;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.62rem;
+  color: var(--ivory-dim);
+  opacity: 0.7;
+}
+.setup-actions { display: flex; gap: 10px; margin-top: 16px; }
+
+/* Buttons */
+.btn {
+  font-family: 'Spectral', serif;
+  font-weight: 600;
+  font-size: 0.92rem;
+  padding: 10px 16px;
+  border-radius: 3px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: opacity 0.15s, background 0.15s;
+}
+.btn-primary { background: var(--brass); color: var(--ink); flex: 1; }
+.btn-primary:hover:not(:disabled) { background: var(--brass-bright); }
+.btn-ghost { background: transparent; border-color: var(--panel-border); color: var(--ivory-dim); }
+.btn-ghost:hover:not(:disabled) { color: var(--ivory); border-color: var(--brass); }
+.btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.link-btn {
+  background: none; border: none; padding: 0;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: var(--brass);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+/* Status */
+.status {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 10px 12px;
+  border-radius: 3px;
+  background: var(--panel-2);
+  border: 1px solid var(--panel-border);
+  color: var(--ivory);
+  margin-bottom: 14px;
+}
+.status-check { border-color: var(--burgundy); color: var(--burgundy); }
+.status-thinking { color: var(--brass-bright); }
+.status-win { border-color: var(--sage); color: var(--sage); font-weight: 700; }
+.status-loss { border-color: var(--burgundy); color: var(--burgundy); font-weight: 700; }
+.status-draw { border-color: var(--brass); color: var(--brass-bright); }
+@media (prefers-reduced-motion: no-preference) {
+  .status-thinking { animation: pulse 1.4s ease-in-out infinite; }
+}
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.55; } }
+
+/* Scoresheet */
+.scoresheet-card { padding: 14px 0 14px; }
+.scoresheet-head, .score-row {
+  display: grid;
+  grid-template-columns: 2.4em 1fr 1fr;
+  padding: 4px 16px;
+}
+.scoresheet-head {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ivory-dim);
+  margin-bottom: 4px;
+}
+.scoresheet-body {
+  background: var(--paper);
+  background-image: repeating-linear-gradient(to bottom, transparent, transparent 27px, var(--paper-line) 28px);
+  color: var(--paper-ink);
+  max-height: 250px;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+.score-row { align-items: baseline; font-family: 'Space Mono', monospace; font-size: 0.9rem; }
+.score-row .num { color: rgba(42,31,22,0.45); }
+.mv-cell { position: relative; white-space: nowrap; }
+.mv-last { font-weight: 700; }
+.mv-tag { font-size: 0.72em; margin-left: 2px; font-weight: 700; }
+.mv-tag-bad { color: var(--burgundy); }
+.mv-tag-good { color: #4a6e3a; }
+.score-empty {
+  padding: 14px 16px; font-family: 'Spectral', serif; font-style: italic;
+  font-size: 0.85rem; color: rgba(42,31,22,0.55);
+}
+.legend {
+  font-family: 'Space Mono', monospace; font-size: 0.62rem; color: var(--ivory-dim);
+  text-align: center; margin-top: 10px; opacity: 0.75; padding: 0 16px;
+}
+
+/* Commento */
+.commento-card { border-left: 3px solid var(--brass); }
+.commento-who {
+  font-family: 'Space Mono', monospace; font-size: 0.68rem; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--brass-bright); margin-bottom: 6px;
+}
+.commento-text { margin: 0 0 4px; font-size: 0.98rem; color: var(--ivory); }
+.commento-card .link-btn { color: var(--ivory-dim); }
+.commento-card .link-btn:hover { color: var(--brass-bright); }
+.commento-card .input-error { margin-top: 8px; }
+
+/* Move Input */
+.input-row { display: flex; gap: 8px; }
+#moveInput {
+  flex: 1;
+  font-family: 'Space Mono', monospace;
+  font-size: 1rem;
+  padding: 10px 12px;
+  background: var(--ink);
+  border: 1px solid var(--panel-border);
+  border-radius: 3px;
+  color: var(--ivory);
+}
+#moveInput::placeholder { color: var(--ivory-dim); opacity: 0.6; }
+#moveInput:focus-visible, .btn:focus-visible, .pill:focus-visible, input[type=range]:focus-visible {
+  outline: 2px solid var(--brass-bright); outline-offset: 2px;
+}
+.input-error {
+  margin-top: 10px; font-size: 0.85rem; color: var(--burgundy);
+  background: rgba(177,88,74,0.1); border: 1px solid rgba(177,88,74,0.3);
+  padding: 8px 10px; border-radius: 3px;
+}
+.legal-moves {
+  margin-top: 10px; font-family: 'Space Mono', monospace; font-size: 0.8rem;
+  color: var(--ivory-dim); line-height: 1.7; word-spacing: 2px;
+}
+.input-card .link-btn { margin-top: 12px; display: inline-block; }
+
+/* Text Board */
+.board-card .link-btn { display: inline-block; }
+.text-board {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: 1.5em repeat(8, 1fr);
+  border: 1px solid var(--panel-border);
+  max-width: 340px;
+}
+.tb-cell {
+  aspect-ratio: 1;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.25rem;
+}
+.tb-label {
+  font-family: 'Space Mono', monospace; font-size: 0.62rem; color: var(--ivory-dim);
+  aspect-ratio: auto;
+}
+.tb-light { background: var(--sq-light); }
+.tb-dark { background: var(--sq-dark); }
+.tb-white-piece { color: var(--ivory); filter: drop-shadow(0 1px 1px rgba(0,0,0,0.5)); }
+.tb-black-piece { color: var(--burgundy); }
+
+/* Footer */
+.footnote {
+  text-align: center; font-size: 0.76rem; color: var(--ivory-dim);
+  margin-top: 20px; line-height: 1.6; padding: 0 8px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .card, .hdr { animation: fadeUp 0.5s ease both; }
+  .card:nth-of-type(2) { animation-delay: 0.05s; }
+  .card:nth-of-type(3) { animation-delay: 0.1s; }
+}
+@keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hdr">
+    <div class="hdr-ornament">1.e4 e5 2.Cf3 Cc6 3.Ab5</div>
+    <h1>Scacchi <em>per corrispondenza</em></h1>
+    <p class="tagline">Gioca contro il motore scrivendo le mosse in notazione — nessuna scacchiera da trascinare, solo scrittura.</p>
+  </header>
+
+  <section class="card">
+    <div class="setup-row">
+      <span class="label">Giochi con</span>
+      <div class="pill-group" id="colorGroup">
+        <button class="pill active" data-color="w" type="button">Bianco</button>
+        <button class="pill" data-color="b" type="button">Nero</button>
+      </div>
+    </div>
+    <div class="setup-row">
+      <div class="elo-head">
+        <span class="label" style="margin-bottom:0;">Livello dell'avversario</span>
+        <span class="elo-readout"><strong id="eloValue">1000</strong> Elo · <span id="eloLabel">Amatoriale</span></span>
+      </div>
+      <input type="range" id="eloSlider" min="400" max="2000" step="50" value="1000" aria-label="Livello Elo dell'avversario">
+      <div class="elo-ticks"><span>400</span><span>800</span><span>1200</span><span>1600</span><span>2000</span></div>
+    </div>
+    <div class="setup-actions">
+      <button class="btn btn-primary" id="newGameBtn" type="button">Nuova partita</button>
+      <button class="btn btn-ghost" id="undoBtn" type="button" disabled>Annulla mossa</button>
+    </div>
+  </section>
+
+  <div class="status" id="statusLine">Tocca a te — gioca il Bianco.</div>
+
+  <section class="card scoresheet-card">
+    <div class="scoresheet-head"><span>N</span><span>Bianco</span><span>Nero</span></div>
+    <div class="scoresheet-body" id="scoresheetBody"></div>
+    <div class="legend">! mossa forte &nbsp;·&nbsp; ?! imprecisione &nbsp;·&nbsp; ? errore &nbsp;·&nbsp; ?? errore grave</div>
+  </section>
+
+  <section class="card commento-card" id="commentoCard" hidden>
+    <div class="commento-who" id="commentoWho">Commento</div>
+    <p class="commento-text" id="commentoText"></p>
+    <button class="link-btn" id="disputeBtn" type="button">contesta questa mossa</button>
+    <div class="input-error" id="disputeMsg" hidden></div>
+  </section>
+
+  <section class="card input-card">
+    <label class="label" for="moveInput">La tua mossa</label>
+    <div class="input-row">
+      <input type="text" id="moveInput" placeholder="es. Cf3, e4, O-O, Dxh5" autocomplete="off" autocapitalize="off" spellcheck="false" inputmode="text">
+      <button class="btn btn-primary" id="playBtn" type="button">Gioca</button>
+    </div>
+    <div class="input-error" id="inputError" hidden></div>
+    <button class="link-btn" id="legalMovesToggle" type="button">mosse possibili</button>
+    <div class="legal-moves" id="legalMovesList" hidden></div>
+  </section>
+
+  <section class="card board-card">
+    <button class="link-btn" id="boardToggle" type="button">mostra scacchiera testuale</button>
+    <div class="text-board" id="textBoard" hidden></div>
+  </section>
+
+  <footer class="footnote">
+    Notazione italiana di default (C=Cavallo, A=Alfiere, T=Torre, D=Donna, R=Re) — capisco anche quella internazionale (N,B,R,Q,K) e le coordinate tipo e2e4. Motore didattico proprio, non un motore da torneo come Stockfish.
+  </footer>
+
+</div>
+
+<script>
+// ============================================================
+// CHESS CORE ENGINE
+// ============================================================
+
+const ChessCore = (function () {
+  const FILES = 'abcdefgh';
+
+  function fileOf(idx) { return idx % 8; }
+  function rankOf(idx) { return Math.floor(idx / 8); }
+  function sq(file, rank) { return rank * 8 + file; }
+  function inBounds(file, rank) { return file >= 0 && file <= 7 && rank >= 0 && rank <= 7; }
+  function idxToAlg(idx) { return FILES[fileOf(idx)] + (rankOf(idx) + 1); }
+  function colorOf(piece) { return piece === piece.toUpperCase() ? 'w' : 'b'; }
+  function opponent(color) { return color === 'w' ? 'b' : 'w'; }
+
+  function initialBoard() {
+    const b = new Array(64).fill(null);
+    const backRank = ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'];
+    for (let f = 0; f < 8; f++) {
+      b[sq(f, 0)] = backRank[f];
+      b[sq(f, 1)] = 'P';
+      b[sq(f, 6)] = 'p';
+      b[sq(f, 7)] = backRank[f].toLowerCase();
+    }
+    return b;
+  }
+
+  function createInitialState() {
+    return {
+      board: initialBoard(),
+      turn: 'w',
+      castling: { wK: true, wQ: true, bK: true, bQ: true },
+      epTarget: null,
+      halfmove: 0,
+      fullmove: 1,
+    };
+  }
+
+  function cloneState(state) {
+    return {
+      board: state.board.slice(),
+      turn: state.turn,
+      castling: { ...state.castling },
+      epTarget: state.epTarget,
+      halfmove: state.halfmove,
+      fullmove: state.fullmove,
+    };
+  }
+
+  const KNIGHT_OFFSETS = [[1, 2], [2, 1], [2, -1], [1, -2], [-1, -2], [-2, -1], [-2, 1], [-1, 2]];
+  const KING_OFFSETS = [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]];
+  const BISHOP_DIRS = [[1, 1], [1, -1], [-1, 1], [-1, -1]];
+  const ROOK_DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+
+  function isSquareAttacked(board, idx, byColor) {
+    const f = fileOf(idx), r = rankOf(idx);
+
+    if (byColor === 'w') {
+      if (f > 0 && r > 0 && board[sq(f - 1, r - 1)] === 'P') return true;
+      if (f < 7 && r > 0 && board[sq(f + 1, r - 1)] === 'P') return true;
+    } else {
+      if (f > 0 && r < 7 && board[sq(f - 1, r + 1)] === 'p') return true;
+      if (f < 7 && r < 7 && board[sq(f + 1, r + 1)] === 'p') return true;
+    }
+
+    const nP = byColor === 'w' ? 'N' : 'n';
+    for (const [df, dr] of KNIGHT_OFFSETS) {
+      const nf = f + df, nr = r + dr;
+      if (inBounds(nf, nr) && board[sq(nf, nr)] === nP) return true;
+    }
+
+    const kP = byColor === 'w' ? 'K' : 'k';
+    for (const [df, dr] of KING_OFFSETS) {
+      const nf = f + df, nr = r + dr;
+      if (inBounds(nf, nr) && board[sq(nf, nr)] === kP) return true;
+    }
+
+    const bP = byColor === 'w' ? 'B' : 'b', qP = byColor === 'w' ? 'Q' : 'q', rP = byColor === 'w' ? 'R' : 'r';
+    for (const [df, dr] of BISHOP_DIRS) {
+      let nf = f + df, nr = r + dr;
+      while (inBounds(nf, nr)) {
+        const p = board[sq(nf, nr)];
+        if (p) {
+          if (p === bP || p === qP) return true;
+          break;
+        }
+        nf += df; nr += dr;
+      }
+    }
+    for (const [df, dr] of ROOK_DIRS) {
+      let nf = f + df, nr = r + dr;
+      while (inBounds(nf, nr)) {
+        const p = board[sq(nf, nr)];
+        if (p) {
+          if (p === rP || p === qP) return true;
+          break;
+        }
+        nf += df; nr += dr;
+      }
+    }
+    return false;
+  }
+
+  function findKing(board, color) {
+    const k = color === 'w' ? 'K' : 'k';
+    for (let i = 0; i < 64; i++) if (board[i] === k) return i;
+    return -1;
+  }
+
+  function isInCheck(state, color) {
+    color = color || state.turn;
+    const kIdx = findKing(state.board, color);
+    if (kIdx === -1) return false;
+    return isSquareAttacked(state.board, kIdx, opponent(color));
+  }
+
+  function genPseudoMoves(state) {
+    const { board, turn } = state;
+    const moves = [];
+    for (let i = 0; i < 64; i++) {
+      const p = board[i];
+      if (!p || colorOf(p) !== turn) continue;
+      const type = p.toUpperCase();
+      const f = fileOf(i), r = rankOf(i);
+
+      if (type === 'P') {
+        genPawnMoves(state, i, f, r, turn, moves);
+      } else if (type === 'N') {
+        for (const [df, dr] of KNIGHT_OFFSETS) {
+          const nf = f + df, nr = r + dr;
+          if (!inBounds(nf, nr)) continue;
+          const t = sq(nf, nr), tp = board[t];
+          if (!tp || colorOf(tp) !== turn) pushMove(moves, i, t, p, turn, tp);
+        }
+      } else if (type === 'K') {
+        for (const [df, dr] of KING_OFFSETS) {
+          const nf = f + df, nr = r + dr;
+          if (!inBounds(nf, nr)) continue;
+          const t = sq(nf, nr), tp = board[t];
+          if (!tp || colorOf(tp) !== turn) pushMove(moves, i, t, p, turn, tp);
+        }
+        genCastleMoves(state, i, turn, moves);
+      } else {
+        const dirs = type === 'B' ? BISHOP_DIRS : type === 'R' ? ROOK_DIRS : BISHOP_DIRS.concat(ROOK_DIRS);
+        for (const [df, dr] of dirs) {
+          let nf = f + df, nr = r + dr;
+          while (inBounds(nf, nr)) {
+            const t = sq(nf, nr), tp = board[t];
+            if (!tp) {
+              pushMove(moves, i, t, p, turn, null);
+            } else {
+              if (colorOf(tp) !== turn) pushMove(moves, i, t, p, turn, tp);
+              break;
+            }
+            nf += df; nr += dr;
+          }
+        }
+      }
+    }
+    return moves;
+  }
+
+  function pushMove(moves, from, to, piece, color, captured, extra) {
+    moves.push(Object.assign({
+      from, to, piece, color,
+      captured: captured || null,
+      isEnPassant: false,
+      castle: null,
+      promotion: null,
+      isDoublePush: false,
+    }, extra || {}));
+  }
+
+  function genPawnMoves(state, i, f, r, turn, moves) {
+    const { board, epTarget } = state;
+    const dir = turn === 'w' ? 1 : -1;
+    const startRank = turn === 'w' ? 1 : 6;
+    const promoRank = turn === 'w' ? 7 : 0;
+    const piece = turn === 'w' ? 'P' : 'p';
+
+    const oneR = r + dir;
+    if (inBounds(f, oneR) && !board[sq(f, oneR)]) {
+      const t = sq(f, oneR);
+      if (oneR === promoRank) {
+        for (const promo of ['Q', 'R', 'B', 'N']) {
+          pushMove(moves, i, t, piece, turn, null, { promotion: promo });
+        }
+      } else {
+        pushMove(moves, i, t, piece, turn, null);
+        const twoR = r + 2 * dir;
+        if (r === startRank && !board[sq(f, twoR)]) {
+          pushMove(moves, i, sq(f, twoR), piece, turn, null, { isDoublePush: true });
+        }
+      }
+    }
+
+    for (const df of [-1, 1]) {
+      const nf = f + df, nr = r + dir;
+      if (!inBounds(nf, nr)) continue;
+      const t = sq(nf, nr);
+      const tp = board[t];
+      if (tp && colorOf(tp) !== turn) {
+        if (nr === promoRank) {
+          for (const promo of ['Q', 'R', 'B', 'N']) {
+            pushMove(moves, i, t, piece, turn, tp, { promotion: promo });
+          }
+        } else {
+          pushMove(moves, i, t, piece, turn, tp);
+        }
+      } else if (t === epTarget) {
+        const epCapSq = sq(nf, r);
+        pushMove(moves, i, t, piece, turn, board[epCapSq], { isEnPassant: true });
+      }
+    }
+  }
+
+  function genCastleMoves(state, i, turn, moves) {
+    const { board, castling } = state;
+    if (isInCheck(state, turn)) return;
+    if (turn === 'w') {
+      if (castling.wK && !board[5] && !board[6] && !isSquareAttacked(board, 5, 'b') && !isSquareAttacked(board, 6, 'b')) {
+        pushMove(moves, 4, 6, 'K', 'w', null, { castle: 'K' });
+      }
+      if (castling.wQ && !board[1] && !board[2] && !board[3] && !isSquareAttacked(board, 2, 'b') && !isSquareAttacked(board, 3, 'b')) {
+        pushMove(moves, 4, 2, 'K', 'w', null, { castle: 'Q' });
+      }
+    } else {
+      if (castling.bK && !board[61] && !board[62] && !isSquareAttacked(board, 61, 'w') && !isSquareAttacked(board, 62, 'w')) {
+        pushMove(moves, 60, 62, 'k', 'b', null, { castle: 'k' });
+      }
+      if (castling.bQ && !board[57] && !board[58] && !board[59] && !isSquareAttacked(board, 58, 'w') && !isSquareAttacked(board, 59, 'w')) {
+        pushMove(moves, 60, 58, 'k', 'b', null, { castle: 'q' });
+      }
+    }
+  }
+
+  function makeMove(state, move) {
+    const next = cloneState(state);
+    const { board } = next;
+    const { from, to, piece, color, promotion, castle, isEnPassant, isDoublePush } = move;
+
+    board[from] = null;
+    let placedPiece = piece;
+    if (promotion) {
+      placedPiece = color === 'w' ? promotion : promotion.toLowerCase();
+    }
+    board[to] = placedPiece;
+
+    if (isEnPassant) {
+      const epCapSq = sq(fileOf(to), rankOf(from));
+      board[epCapSq] = null;
+    }
+
+    if (castle) {
+      if (castle === 'K') { board[7] = null; board[5] = 'R'; }
+      else if (castle === 'Q') { board[0] = null; board[3] = 'R'; }
+      else if (castle === 'k') { board[63] = null; board[61] = 'r'; }
+      else if (castle === 'q') { board[56] = null; board[59] = 'r'; }
+    }
+
+    if (piece === 'K') { next.castling.wK = false; next.castling.wQ = false; }
+    if (piece === 'k') { next.castling.bK = false; next.castling.bQ = false; }
+    if (from === 0 || to === 0) next.castling.wQ = false;
+    if (from === 7 || to === 7) next.castling.wK = false;
+    if (from === 56 || to === 56) next.castling.bQ = false;
+    if (from === 63 || to === 63) next.castling.bK = false;
+
+    next.epTarget = isDoublePush ? sq(fileOf(from), (rankOf(from) + rankOf(to)) / 2) : null;
+    if (piece.toUpperCase() === 'P' || move.captured) next.halfmove = 0;
+    else next.halfmove++;
+
+    if (color === 'b') next.fullmove++;
+    next.turn = opponent(color);
+    return next;
+  }
+
+  function genLegalMoves(state) {
+    const pseudo = genPseudoMoves(state);
+    return pseudo.filter(m => {
+      const next = makeMove(state, m);
+      return !isInCheck(next, state.turn);
+    });
+  }
+
+  const PIECE_MAP_ITA = { 'C': 'N', 'A': 'B', 'T': 'R', 'D': 'Q', 'R': 'K' };
+  const PIECE_TO_ITA = { 'N': 'C', 'B': 'A', 'R': 'T', 'Q': 'D', 'K': 'R' };
+
+  function moveToStringSAN(state, move) {
+    if (move.castle) return (move.castle.toUpperCase() === 'K' || move.castle === 'k') ? 'O-O' : 'O-O-O';
+    const type = move.piece.toUpperCase();
+    let san = '';
+    if (type !== 'P') {
+      san += PIECE_TO_ITA[type];
+      const legal = genLegalMoves(state);
+      const samePieceMoves = legal.filter(m => m.from !== move.from && m.to === move.to && m.piece.toUpperCase() === type);
+      if (samePieceMoves.length > 0) {
+        const sameFile = samePieceMoves.some(m => fileOf(m.from) === fileOf(move.from));
+        const sameRank = samePieceMoves.some(m => rankOf(m.from) === rankOf(move.from));
+        if (!sameFile) san += FILES[fileOf(move.from)];
+        else if (!sameRank) san += (rankOf(move.from) + 1);
+        else san += idxToAlg(move.from);
+      }
+    } else if (move.captured) {
+      san += FILES[fileOf(move.from)];
+    }
+    if (move.captured) san += 'x';
+    san += idxToAlg(move.to);
+    if (move.promotion) san += '=' + PIECE_TO_ITA[move.promotion];
+
+    const next = makeMove(state, move);
+    if (isInCheck(next, next.turn)) {
+      const leg = genLegalMoves(next);
+      san += leg.length === 0 ? '#' : '+';
+    }
+    return san;
+  }
+
+  function parseInputMove(state, str) {
+    if (!str) return null;
+    let cleanStr = str.trim();
+    const legal = genLegalMoves(state);
+
+    for (const m of legal) {
+      const sanIta = moveToStringSAN(state, m);
+      if (sanIta.toLowerCase() === cleanStr.toLowerCase()) return m;
+    }
+
+    let norm = cleanStr;
+    const firstChar = norm[0].toUpperCase();
+    if (PIECE_MAP_ITA[firstChar]) {
+      norm = PIECE_MAP_ITA[firstChar] + norm.slice(1);
+    }
+
+    if (cleanStr.length >= 4) {
+      const fromAlg = cleanStr.slice(0, 2).toLowerCase();
+      const toAlg = cleanStr.slice(2, 4).toLowerCase();
+      const promoChar = cleanStr.length > 4 ? cleanStr[4].toUpperCase() : null;
+      for (const m of legal) {
+        if (idxToAlg(m.from) === fromAlg && idxToAlg(m.to) === toAlg) {
+          if (promoChar) {
+            let pNorm = PIECE_MAP_ITA[promoChar] || promoChar;
+            if (m.promotion === pNorm) return m;
+          } else if (!m.promotion || m.promotion === 'Q') {
+            return m;
+          }
+        }
+      }
+    }
+
+    const cUpper = cleanStr.toUpperCase().replace(/0/g, 'O');
+    if (cUpper === 'O-O') return legal.find(m => m.castle === 'K' || m.castle === 'k') || null;
+    if (cUpper === 'O-O-O') return legal.find(m => m.castle === 'Q' || m.castle === 'q') || null;
+
+    return null;
+  }
+
+  return {
+    FILES, idxToAlg, createInitialState, cloneState,
+    genLegalMoves, makeMove, isInCheck, moveToStringSAN, parseInputMove
+  };
+})();
+
+// ============================================================
+// CHESS ENGINE AI (Elo Adjustable)
+// ============================================================
+
+const ChessAI = (function () {
+  const PIECE_VALS = { 'P': 100, 'N': 320, 'B': 330, 'R': 500, 'Q': 900, 'K': 20000 };
+
+  function evaluateBoard(state) {
+    let score = 0;
+    for (let i = 0; i < 64; i++) {
+      const p = state.board[i];
+      if (!p) continue;
+      const v = PIECE_VALS[p.toUpperCase()] || 0;
+      score += p === p.toUpperCase() ? v : -v;
+    }
+    return score;
+  }
+
+  function minimax(state, depth, alpha, beta, isMax) {
+    if (depth === 0) return evaluateBoard(state);
+    const legal = ChessCore.genLegalMoves(state);
+    if (legal.length === 0) {
+      if (ChessCore.isInCheck(state, state.turn)) {
+        return isMax ? -99999 + (10 - depth) : 99999 - (10 - depth);
+      }
+      return 0;
+    }
+
+    if (isMax) {
+      let maxEval = -Infinity;
+      for (const m of legal) {
+        const next = ChessCore.makeMove(state, m);
+        const ev = minimax(next, depth - 1, alpha, beta, false);
+        maxEval = Math.max(maxEval, ev);
+        alpha = Math.max(alpha, ev);
+        if (beta <= alpha) break;
+      }
+      return maxEval;
+    } else {
+      let minEval = Infinity;
+      for (const m of legal) {
+        const next = ChessCore.makeMove(state, m);
+        const ev = minimax(next, depth - 1, alpha, beta, true);
+        minEval = Math.min(minEval, ev);
+        beta = Math.min(beta, ev);
+        if (beta <= alpha) break;
+      }
+      return minEval;
+    }
+  }
+
+  function getBestMove(state, elo) {
+    const legal = ChessCore.genLegalMoves(state);
+    if (legal.length === 0) return null;
+
+    const depth = elo < 1000 ? 1 : elo < 1600 ? 2 : 3;
+    const randomness = Math.max(0, (2000 - elo) / 300);
+
+    let scored = legal.map(m => {
+      const next = ChessCore.makeMove(state, m);
+      let ev = minimax(next, depth - 1, -Infinity, Infinity, state.turn === 'w');
+      if (randomness > 0) {
+        ev += (Math.random() - 0.5) * randomness * 150;
+      }
+      return { move: m, eval: ev };
+    });
+
+    scored.sort((a, b) => state.turn === 'w' ? b.eval - a.eval : a.eval - b.eval);
+    return scored[0].move;
+  }
+
+  return { getBestMove, evaluateBoard };
+})();
+
+// ============================================================
+// UI & GAME CONTROLLER
+// ============================================================
+
+(function () {
+  let gameState = ChessCore.createInitialState();
+  let history = [];
+  let userColor = 'w';
+  let opponentElo = 1000;
+
+  const UNICODE_PIECES = {
+    'K': '♔', 'Q': '♕', 'R': '♖', 'B': '♗', 'N': '♘', 'P': '♙',
+    'k': '♚', 'q': '♛', 'r': '♜', 'b': '♝', 'n': '♞', 'p': '♟'
+  };
+
+  const eloSlider = document.getElementById('eloSlider');
+  const eloValue = document.getElementById('eloValue');
+  const eloLabel = document.getElementById('eloLabel');
+  const colorGroup = document.getElementById('colorGroup');
+  const newGameBtn = document.getElementById('newGameBtn');
+  const undoBtn = document.getElementById('undoBtn');
+  const statusLine = document.getElementById('statusLine');
+  const scoresheetBody = document.getElementById('scoresheetBody');
+  const moveInput = document.getElementById('moveInput');
+  const playBtn = document.getElementById('playBtn');
+  const inputError = document.getElementById('inputError');
+  const legalMovesToggle = document.getElementById('legalMovesToggle');
+  const legalMovesList = document.getElementById('legalMovesList');
+  const boardToggle = document.getElementById('boardToggle');
+  const textBoard = document.getElementById('textBoard');
+  const commentoCard = document.getElementById('commentoCard');
+  const commentoWho = document.getElementById('commentoWho');
+  const commentoText = document.getElementById('commentoText');
+  const disputeBtn = document.getElementById('disputeBtn');
+  const disputeMsg = document.getElementById('disputeMsg');
+
+  function getEloCategory(elo) {
+    if (elo <= 600) return 'Principiante';
+    if (elo <= 1100) return 'Amatoriale';
+    if (elo <= 1500) return 'Intermedio';
+    if (elo <= 1800) return 'Avanzato';
+    return 'Maestro';
+  }
+
+  function renderBoard() {
+    textBoard.innerHTML = '';
+    const files = ['a','b','c','d','e','f','g','h'];
+    const isFlipped = userColor === 'b';
+
+    textBoard.appendChild(createDiv('tb-cell tb-label', ''));
+    for (let f = 0; f < 8; f++) {
+      const fileIdx = isFlipped ? 7 - f : f;
+      textBoard.appendChild(createDiv('tb-cell tb-label', files[fileIdx]));
+    }
+
+    for (let r = 0; r < 8; r++) {
+      const rankIdx = isFlipped ? r : 7 - r;
+      textBoard.appendChild(createDiv('tb-cell tb-label', (rankIdx + 1).toString()));
+
+      for (let f = 0; f < 8; f++) {
+        const fileIdx = isFlipped ? 7 - f : f;
+        const idx = rankIdx * 8 + fileIdx;
+        const piece = gameState.board[idx];
+        const isLight = (rankIdx + fileIdx) % 2 !== 0;
+        const cell = createDiv('tb-cell ' + (isLight ? 'tb-light' : 'tb-dark'));
+
+        if (piece) {
+          const isWhitePiece = piece === piece.toUpperCase();
+          const pSpan = document.createElement('span');
+          pSpan.className = isWhitePiece ? 'tb-white-piece' : 'tb-black-piece';
+          pSpan.textContent = UNICODE_PIECES[piece] || piece;
+          cell.appendChild(pSpan);
+        }
+        textBoard.appendChild(cell);
+      }
+    }
+  }
+
+  function createDiv(className, text) {
+    const d = document.createElement('div');
+    d.className = className;
+    if (text !== undefined) d.textContent = text;
+    return d;
+  }
+
+  function updateScoresheet() {
+    scoresheetBody.innerHTML = '';
+    if (history.length === 0) {
+      scoresheetBody.innerHTML = '<div class="score-empty">Nessuna mossa giocata.</div>';
+      return;
+    }
+
+    for (let i = 0; i < history.length; i += 2) {
+      const rowNum = Math.floor(i / 2) + 1;
+      const wMove = history[i];
+      const bMove = history[i + 1];
+
+      const row = document.createElement('div');
+      row.className = 'score-row';
+      
+      const numCell = createDiv('num', rowNum + '.');
+      const wCell = createDiv('mv-cell ' + (i === history.length - 1 ? 'mv-last' : ''), wMove ? wMove.san : '');
+      const bCell = createDiv('mv-cell ' + (i + 1 === history.length - 1 ? 'mv-last' : ''), bMove ? bMove.san : '');
+
+      row.appendChild(numCell);
+      row.appendChild(wCell);
+      row.appendChild(bCell);
+      scoresheetBody.appendChild(row);
+    }
+    scoresheetBody.scrollTop = scoresheetBody.scrollHeight;
+  }
+
+  function updateLegalMovesList() {
+    const legal = ChessCore.genLegalMoves(gameState);
+    const sans = legal.map(m => ChessCore.moveToStringSAN(gameState, m));
+    sans.sort();
+    legalMovesList.textContent = sans.join('   ');
+  }
+
+  function checkGameEnd() {
+    const legal = ChessCore.genLegalMoves(gameState);
+    const inCheck = ChessCore.isInCheck(gameState, gameState.turn);
+
+    if (legal.length === 0) {
+      if (inCheck) {
+        const winner = gameState.turn === 'w' ? 'Nero' : 'Bianco';
+        setStatus(`Scacco matto! Vince il ${winner}.`, gameState.turn === userColor ? 'status-loss' : 'status-win');
+      } else {
+        setStatus('Patta per stallo.', 'status-draw');
+      }
+      return true;
+    }
+    return false;
+  }
+
+  function setStatus(msg, className = '') {
+    statusLine.textContent = msg;
+    statusLine.className = 'status ' + className;
+  }
+
+  function updateTurnStatus() {
+    if (checkGameEnd()) return;
+    const isUserTurn = gameState.turn === userColor;
+    const inCheck = ChessCore.isInCheck(gameState, gameState.turn);
+    const checkText = inCheck ? ' (Sotto scacco!)' : '';
+
+    if (isUserTurn) {
+      setStatus(`Tocca a te — gioca il ${userColor === 'w' ? 'Bianco' : 'Nero'}${checkText}.`, inCheck ? 'status-check' : '');
+    } else {
+      setStatus(`L'avversario sta pensando...${checkText}`, 'status-thinking');
+    }
+  }
+
+  function makeUserMove(moveStr) {
+    inputError.hidden = true;
+    disputeMsg.hidden = true;
+    const move = ChessCore.parseInputMove(gameState, moveStr);
+
+    if (!move) {
+      inputError.textContent = `Mossa non valida: "${moveStr}". Verifica la notazione (es. Cf3, e4, O-O).`;
+      inputError.hidden = false;
+      return;
+    }
+
+    executeMove(move);
+    moveInput.value = '';
+
+    if (gameState.turn !== userColor && !checkGameEnd()) {
+      setTimeout(makeBotMove, 400);
+    }
+  }
+
+  function executeMove(move) {
+    const san = ChessCore.moveToStringSAN(gameState, move);
+    history.push({ state: ChessCore.cloneState(gameState), move, san });
+    gameState = ChessCore.makeMove(gameState, move);
+
+    undoBtn.disabled = false;
+    renderBoard();
+    updateScoresheet();
+    updateLegalMovesList();
+    updateTurnStatus();
+    generateCommentary(san);
+  }
+
+  function makeBotMove() {
+    if (gameState.turn === userColor) return;
+    const botMove = ChessAI.getBestMove(gameState, opponentElo);
+    if (botMove) {
+      executeMove(botMove);
+    }
+  }
+
+  function generateCommentary(lastSan) {
+    commentoCard.hidden = false;
+    const who = gameState.turn === userColor ? 'L\'avversario ha giocato' : 'Tua mossa';
+    commentoWho.textContent = who;
+    commentoText.innerHTML = `Mossa registrata: <span class="tag-symbol">${lastSan}</span>. Posizione aggiornata sulla scacchiera.`;
+  }
+
+  function startNewGame() {
+    gameState = ChessCore.createInitialState();
+    history = [];
+    undoBtn.disabled = true;
+    inputError.hidden = true;
+    commentoCard.hidden = true;
+    renderBoard();
+    updateScoresheet();
+    updateLegalMovesList();
+    updateTurnStatus();
+
+    if (userColor === 'b') {
+      setTimeout(makeBotMove, 400);
+    }
+  }
+
+  // Event Listeners
+  eloSlider.addEventListener('input', (e) => {
+    opponentElo = parseInt(e.target.value, 10);
+    eloValue.textContent = opponentElo;
+    eloLabel.textContent = getEloCategory(opponentElo);
+  });
+
+  colorGroup.addEventListener('click', (e) => {
+    const btn = e.target.closest('.pill');
+    if (!btn) return;
+    colorGroup.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    userColor = btn.dataset.color;
+    startNewGame();
+  });
+
+  newGameBtn.addEventListener('click', startNewGame);
+
+  undoBtn.addEventListener('click', () => {
+    if (history.length === 0) return;
+    const steps = (history.length >= 2 && gameState.turn === userColor) ? 2 : 1;
+    for (let i = 0; i < steps; i++) {
+      if (history.length > 0) {
+        const last = history.pop();
+        gameState = last.state;
+      }
+    }
+    if (history.length === 0) undoBtn.disabled = true;
+    renderBoard();
+    updateScoresheet();
+    updateLegalMovesList();
+    updateTurnStatus();
+  });
+
+  playBtn.addEventListener('click', () => makeUserMove(moveInput.value));
+  moveInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') makeUserMove(moveInput.value);
+  });
+
+  legalMovesToggle.addEventListener('click', () => {
+    legalMovesList.hidden = !legalMovesList.hidden;
+    legalMovesToggle.textContent = legalMovesList.hidden ? 'mosse possibili' : 'nascondi mosse possibili';
+  });
+
+  boardToggle.addEventListener('click', () => {
+    textBoard.hidden = !textBoard.hidden;
+    boardToggle.textContent = textBoard.hidden ? 'mostra scacchiera testuale' : 'nascondi scacchiera testuale';
+  });
+
+  disputeBtn.addEventListener('click', () => {
+    disputeMsg.textContent = "Contestazione inviata. (Modalità corrispondenza: la notazione registrata è la fonte di verità ufficiale).";
+    disputeMsg.hidden = false;
+  });
+
+  // Init
+  startNewGame();
+})();
+</script>
+</body>
+</html>
